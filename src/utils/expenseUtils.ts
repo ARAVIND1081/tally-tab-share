@@ -1,3 +1,4 @@
+
 export interface Balance {
   from: string;
   to: string;
@@ -79,7 +80,51 @@ export const generateBalances = (expenses: any[], users: any[]) => {
   return consolidatedBalances;
 };
 
-// Update the formatCurrency function to accept a currency symbol
-export const formatCurrency = (amount: number, symbol = '$'): string => {
-  return `${symbol}${amount.toFixed(2)}`;
+// Update formatCurrency function to handle currency objects
+export const formatCurrency = (amount: number, currency: { symbol: string; rate: number } | string = '$'): string => {
+  if (typeof currency === 'string') {
+    return `${currency}${amount.toFixed(2)}`;
+  }
+  
+  // Convert amount using the currency rate and apply the symbol
+  const convertedAmount = amount * currency.rate;
+  return `${currency.symbol}${convertedAmount.toFixed(2)}`;
+};
+
+// Calculate the total expenses
+export const getTotalExpenses = (expenses: any[]): number => {
+  return expenses
+    .filter(e => e.type !== 'settlement')
+    .reduce((total, expense) => total + expense.amount, 0);
+};
+
+// Calculate user balance (positive means owed, negative means owes)
+export const getUserBalance = (balances: Balance[], userId: string): number => {
+  let balance = 0;
+  
+  // Amount user is owed
+  balances.forEach(b => {
+    if (b.to === userId) balance += b.amount;
+    if (b.from === userId) balance -= b.amount;
+  });
+  
+  return balance;
+};
+
+// Group expenses by category for pie chart
+export const groupExpensesByCategory = (expenses: any[]): { name: string, value: number }[] => {
+  const categories: { [key: string]: number } = {};
+  
+  expenses.forEach(expense => {
+    const category = expense.category || 'Uncategorized';
+    if (!categories[category]) {
+      categories[category] = 0;
+    }
+    categories[category] += expense.amount;
+  });
+  
+  return Object.keys(categories).map(category => ({
+    name: category,
+    value: categories[category]
+  }));
 };
