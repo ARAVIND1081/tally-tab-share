@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import { X, UserPlus } from 'lucide-react';
 
 interface ExpenseFormProps {
   users: User[];
@@ -45,7 +46,6 @@ const ExpenseForm = ({ users, currentUser, onAddExpense, currency }: ExpenseForm
     users.reduce((acc, user) => ({ ...acc, [user.id]: '' }), {})
   );
   const [newParticipantName, setNewParticipantName] = useState('');
-  const [newParticipantEmail, setNewParticipantEmail] = useState('');
   const [customParticipants, setCustomParticipants] = useState<User[]>([]);
   const { toast } = useToast();
 
@@ -77,7 +77,7 @@ const ExpenseForm = ({ users, currentUser, onAddExpense, currency }: ExpenseForm
     const newParticipant: User = {
       id: `custom-${uuidv4()}`,
       name: newParticipantName.trim(),
-      email: newParticipantEmail.trim() || `${newParticipantName.trim().toLowerCase().replace(/\s+/g, '.')}@example.com`
+      email: `${newParticipantName.trim().toLowerCase().replace(/\s+/g, '.')}@example.com`
     };
 
     // Add to custom participants
@@ -95,13 +95,34 @@ const ExpenseForm = ({ users, currentUser, onAddExpense, currency }: ExpenseForm
       [newParticipant.id]: ''
     });
 
-    // Clear inputs
+    // Clear input
     setNewParticipantName('');
-    setNewParticipantEmail('');
 
     toast({
       title: "Participant added",
       description: `${newParticipant.name} has been added to this expense.`,
+    });
+  };
+
+  const handleRemoveParticipant = (userId: string) => {
+    // If it's a custom participant, remove from the list
+    if (userId.startsWith('custom-')) {
+      setCustomParticipants(customParticipants.filter(p => p.id !== userId));
+    }
+    
+    // Remove from selected participants
+    const updatedParticipants = { ...selectedParticipants };
+    delete updatedParticipants[userId];
+    setSelectedParticipants(updatedParticipants);
+    
+    // Remove from custom shares if present
+    const updatedShares = { ...customShares };
+    delete updatedShares[userId];
+    setCustomShares(updatedShares);
+    
+    toast({
+      title: "Participant removed",
+      description: "Participant has been removed from this expense."
     });
   };
 
@@ -275,94 +296,98 @@ const ExpenseForm = ({ users, currentUser, onAddExpense, currency }: ExpenseForm
           </div>
         </div>
         
-        <div className="flex justify-between items-center">
-          <Label>Participants</Label>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" type="button">
-                Add Participant
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Participant</DialogTitle>
-              </DialogHeader>
-              
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="participantName">Name*</Label>
-                  <Input
-                    id="participantName"
-                    placeholder="Enter participant name"
-                    value={newParticipantName}
-                    onChange={(e) => setNewParticipantName(e.target.value)}
+        {/* Participants section with improved UI */}
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <Label className="text-lg font-medium">Participants</Label>
+          </div>
+          
+          {/* Quick add participant input */}
+          <div className="flex gap-2">
+            <Input
+              placeholder="Enter participant name..."
+              value={newParticipantName}
+              onChange={(e) => setNewParticipantName(e.target.value)}
+              className="flex-1"
+            />
+            <Button 
+              type="button" 
+              onClick={handleAddParticipant}
+              className="bg-teal-600 hover:bg-teal-700 flex items-center gap-1"
+            >
+              <UserPlus size={16} />
+              Add
+            </Button>
+          </div>
+          
+          {/* Participants list */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+            {allParticipants.map(user => (
+              <div 
+                key={user.id} 
+                className={`flex items-center justify-between p-3 rounded-md border ${
+                  user.id.startsWith('custom-') ? 'bg-teal-50 border-teal-200' : 'bg-white border-gray-200'
+                }`}
+              >
+                <div className="flex items-center gap-3 flex-1">
+                  <Checkbox
+                    id={`participant-${user.id}`}
+                    checked={!!selectedParticipants[user.id]}
+                    onCheckedChange={(checked) => 
+                      handleParticipantChange(user.id, checked as boolean)
+                    }
                   />
+                  <label
+                    htmlFor={`participant-${user.id}`}
+                    className="flex-1 text-sm font-medium cursor-pointer"
+                  >
+                    {user.name} 
+                    {user.id.startsWith('custom-') && (
+                      <span className="ml-1 text-xs text-teal-600">(Added)</span>
+                    )}
+                  </label>
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="participantEmail">Email (optional)</Label>
+                {/* Custom split amount input */}
+                {splitType === 'custom' && selectedParticipants[user.id] && (
                   <Input
-                    id="participantEmail"
-                    type="email"
-                    placeholder="Enter participant email"
-                    value={newParticipantEmail}
-                    onChange={(e) => setNewParticipantEmail(e.target.value)}
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder={`${currency.symbol}0.00`}
+                    value={customShares[user.id] || ''}
+                    onChange={(e) => handleCustomShareChange(user.id, e.target.value)}
+                    className="w-24 ml-2"
                   />
-                </div>
-              </div>
-              
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button variant="outline" type="button">Cancel</Button>
-                </DialogClose>
-                <Button 
+                )}
+                
+                {/* Remove participant button */}
+                <Button
                   type="button"
-                  onClick={() => {
-                    handleAddParticipant();
-                  }}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleRemoveParticipant(user.id)}
+                  className="ml-2 p-1 h-8 w-8"
                 >
-                  Add Participant
+                  <X size={16} />
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {allParticipants.map(user => (
-            <div key={user.id} className={`flex items-center space-x-2 p-2 border rounded ${user.id.startsWith('custom-') ? 'border-teal-200 bg-teal-50' : ''}`}>
-              <div className="flex-1">
-                <Checkbox
-                  id={`participant-${user.id}`}
-                  checked={selectedParticipants[user.id]}
-                  onCheckedChange={(checked) => 
-                    handleParticipantChange(user.id, checked as boolean)
-                  }
-                />
-                <label
-                  htmlFor={`participant-${user.id}`}
-                  className="ml-2 text-sm font-medium cursor-pointer"
-                >
-                  {user.name} {user.id.startsWith('custom-') && '(Custom)'}
-                </label>
               </div>
-              
-              {splitType === 'custom' && selectedParticipants[user.id] && (
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder={`${currency.symbol}0.00`}
-                  value={customShares[user.id]}
-                  onChange={(e) => handleCustomShareChange(user.id, e.target.value)}
-                  className="w-24"
-                />
-              )}
+            ))}
+          </div>
+          
+          {/* Show message if no participants */}
+          {allParticipants.length === 0 && (
+            <div className="text-center py-4 bg-gray-50 rounded-lg">
+              <p className="text-gray-500">No participants added yet. Add some participants to continue.</p>
             </div>
-          ))}
+          )}
         </div>
         
-        <Button type="submit" className="w-full bg-teal-600 hover:bg-teal-700">
+        <Button 
+          type="submit" 
+          className="w-full bg-teal-600 hover:bg-teal-700"
+          disabled={allParticipants.length === 0}
+        >
           Add Expense
         </Button>
       </form>
