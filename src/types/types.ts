@@ -18,6 +18,7 @@ export interface Expense {
   paidBy: string;
   participants: Participant[];
   type?: 'regular' | 'settlement';
+  category?: string;
 }
 
 export interface Balance {
