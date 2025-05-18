@@ -12,14 +12,16 @@ import { Button } from "@/components/ui/button";
 import { Expense, User } from '@/types/types';
 import { formatCurrency } from '@/utils/expenseUtils';
 import { Input } from '@/components/ui/input';
+import { Currency } from '@/components/CurrencySelector';
 
 interface ExpenseListProps {
   expenses: Expense[];
   users: User[];
   onDeleteExpense: (id: string) => void;
+  currency: Currency;
 }
 
-const ExpenseList = ({ expenses, users, onDeleteExpense }: ExpenseListProps) => {
+const ExpenseList = ({ expenses, users, onDeleteExpense, currency }: ExpenseListProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'amount'>('date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -64,6 +66,11 @@ const ExpenseList = ({ expenses, users, onDeleteExpense }: ExpenseListProps) => 
 
   const isSettlement = (expense: Expense): boolean => {
     return expense.type === 'settlement';
+  };
+
+  // Use the currency symbol for formatting
+  const formatAmount = (amount: number): string => {
+    return `${currency.symbol}${(amount * currency.rate).toFixed(2)}`;
   };
 
   return (
@@ -118,14 +125,14 @@ const ExpenseList = ({ expenses, users, onDeleteExpense }: ExpenseListProps) => 
                   </TableCell>
                   <TableCell>{formatDate(expense.date)}</TableCell>
                   <TableCell>{getUserName(expense.paidBy)}</TableCell>
-                  <TableCell>{formatCurrency(expense.amount)}</TableCell>
+                  <TableCell>{formatAmount(expense.amount)}</TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
                       {expense.participants.map(p => (
                         <span 
                           key={p.userId} 
                           className="bg-gray-100 px-2 py-1 rounded text-xs"
-                          title={`${getUserName(p.userId)}: ${formatCurrency(p.share)}`}
+                          title={`${getUserName(p.userId)}: ${formatAmount(p.share)}`}
                         >
                           {getUserName(p.userId)}
                         </span>

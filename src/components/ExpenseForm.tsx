@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,14 +12,16 @@ import {
 } from "@/components/ui/select";
 import { User, Expense, Participant } from '@/types/types';
 import { v4 as uuidv4 } from 'uuid';
+import { Currency } from '@/components/CurrencySelector';
 
 interface ExpenseFormProps {
   users: User[];
   currentUser: User;
   onAddExpense: (expense: Expense) => void;
+  currency: Currency;
 }
 
-const ExpenseForm = ({ users, currentUser, onAddExpense }: ExpenseFormProps) => {
+const ExpenseForm = ({ users, currentUser, onAddExpense, currency }: ExpenseFormProps) => {
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [paidBy, setPaidBy] = useState(currentUser.id);
@@ -133,7 +134,7 @@ const ExpenseForm = ({ users, currentUser, onAddExpense }: ExpenseFormProps) => 
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="amount">Amount</Label>
+          <Label htmlFor="amount">Amount ({currency.symbol})</Label>
           <Input
             id="amount"
             type="number"
@@ -218,7 +219,7 @@ const ExpenseForm = ({ users, currentUser, onAddExpense }: ExpenseFormProps) => 
                     type="number"
                     min="0"
                     step="0.01"
-                    placeholder="Amount"
+                    placeholder={`${currency.symbol}0.00`}
                     value={customShares[user.id]}
                     onChange={(e) => handleCustomShareChange(user.id, e.target.value)}
                     className="w-24"

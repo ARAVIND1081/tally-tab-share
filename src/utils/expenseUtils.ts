@@ -1,112 +1,85 @@
-import { Expense, User, Balance } from '@/types/types';
+export interface Balance {
+  from: string;
+  to: string;
+  amount: number;
+}
 
-export const generateBalances = (expenses: Expense[], users: User[]): Balance[] => {
-  const netBalances: Record<string, Record<string, number>> = {};
-  
-  // Initialize balances
+export const generateBalances = (expenses: any[], users: any[]) => {
+  const userBalances: { [key: string]: { [key: string]: number } } = {};
+
+  // Initialize balances for each pair of users
   users.forEach(user1 => {
-    netBalances[user1.id] = {};
     users.forEach(user2 => {
       if (user1.id !== user2.id) {
-        netBalances[user1.id][user2.id] = 0;
+        if (!userBalances[user1.id]) {
+          userBalances[user1.id] = {};
+        }
+        userBalances[user1.id][user2.id] = 0;
       }
     });
   });
-  
-  // Calculate individual balances from expenses
+
+  // Process each expense
   expenses.forEach(expense => {
-    const paidBy = expense.paidBy;
+    const numberOfParticipants = expense.participants.length;
     
+    // Distribute the expense among participants
     expense.participants.forEach(participant => {
-      const userId = participant.userId;
+      const owes = expense.paidBy;
+      const owedTo = participant.userId;
       const share = participant.share;
-      
-      if (paidBy !== userId) {
-        // User owes money to the payer
-        netBalances[userId][paidBy] = (netBalances[userId][paidBy] || 0) + share;
-        // Reduce in opposite direction
-        netBalances[paidBy][userId] = (netBalances[paidBy][userId] || 0) - share;
-      }
+
+      userBalances[owes][owedTo] += share;
     });
   });
-  
-  // Simplify balances to one-way only
-  const simplifiedBalances: Balance[] = [];
-  
+
+  // Convert to array format
+  const balances: Balance[] = [];
   users.forEach(user1 => {
     users.forEach(user2 => {
-      if (user1.id < user2.id) { // Avoid duplicates
-        const balance = netBalances[user1.id][user2.id];
-        
-        if (balance > 0) {
-          // user1 owes user2
-          simplifiedBalances.push({
-            from: user1.id,
-            to: user2.id,
-            amount: balance
-          });
-        } else if (balance < 0) {
-          // user2 owes user1
-          simplifiedBalances.push({
-            from: user2.id,
-            to: user1.id,
-            amount: -balance
-          });
+      if (user1.id !== user2.id) {
+        const amount = userBalances[user1.id][user2.id];
+        if (amount > 0) {
+          balances.push({ from: user1.id, to: user2.id, amount: amount });
         }
       }
     });
   });
-  
-  return simplifiedBalances;
-};
 
-export const getTotalExpenses = (expenses: Expense[]): number => {
-  return expenses.reduce((sum, expense) => {
-    if (expense.type !== 'settlement') {
-      return sum + expense.amount;
+  // Consolidate balances
+  const consolidatedBalances: Balance[] = [];
+  for (let i = 0; i < balances.length; i++) {
+    const balance1 = balances[i];
+    let isConsolidated = false;
+
+    for (let j = i + 1; j < balances.length; j++) {
+      const balance2 = balances[j];
+
+      if (balance1.from === balance2.to && balance1.to === balance2.from) {
+        // Found a matching balance to consolidate
+        const netAmount = balance1.amount - balance2.amount;
+
+        if (netAmount > 0) {
+          consolidatedBalances.push({ from: balance1.from, to: balance1.to, amount: netAmount });
+        } else if (netAmount < 0) {
+          consolidatedBalances.push({ from: balance2.from, to: balance2.to, amount: Math.abs(netAmount) });
+        }
+
+        isConsolidated = true;
+        balances.splice(j, 1); // Remove balance2 from further consideration
+        break;
+      }
     }
-    return sum;
-  }, 0);
-};
 
-export const getUserBalance = (balances: Balance[], userId: string): number => {
-  let totalOwed = 0;
-  let totalOwes = 0;
-  
-  balances.forEach(balance => {
-    if (balance.from === userId) {
-      totalOwes += balance.amount;
+    if (!isConsolidated) {
+      consolidatedBalances.push(balance1);
     }
-    if (balance.to === userId) {
-      totalOwed += balance.amount;
-    }
-  });
-  
-  return totalOwed - totalOwes;
+  }
+
+  return consolidatedBalances;
 };
 
-export const formatCurrency = (amount: number, currency = { symbol: '$', rate: 1 }): string => {
-  // Convert amount to the selected currency
-  const convertedAmount = amount * (1 / currency.rate);
-  
-  return `${currency.symbol}${convertedAmount.toFixed(2)}`;
-};
-
-// Group expenses by category for charts
-export const groupExpensesByCategory = (expenses: Expense[]): { name: string, value: number }[] => {
-  const categories = new Map<string, number>();
-  
-  expenses.forEach(expense => {
-    if (expense.type === 'settlement') return;
-    
-    // Use the description as a simple category for now
-    const category = expense.description;
-    const currentTotal = categories.get(category) || 0;
-    categories.set(category, currentTotal + expense.amount);
-  });
-  
-  return Array.from(categories.entries()).map(([name, value]) => ({
-    name,
-    value
-  }));
+// Update the formatCurrency function to accept a currency symbol
+export const formatCurrency = (amount: number, symbol = '$'): string => {
+  return `${symbol}${amount.toFixed(2)}`;
 };

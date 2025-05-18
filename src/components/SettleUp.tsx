@@ -4,14 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Balance, User } from '@/types/types';
 import { formatCurrency } from '@/utils/expenseUtils';
 import { AlertCircle } from 'lucide-react';
+import { Currency } from '@/components/CurrencySelector';
 
 interface SettleUpProps {
   balances: Balance[];
   users: User[];
   onSettleUp: (fromId: string, toId: string, amount: number) => void;
+  currency: Currency;
 }
 
-const SettleUp = ({ balances, users, onSettleUp }: SettleUpProps) => {
+const SettleUp = ({ balances, users, onSettleUp, currency }: SettleUpProps) => {
   const getUserName = (id: string): string => {
     const user = users.find(u => u.id === id);
     return user ? user.name : 'Unknown';
@@ -39,6 +41,11 @@ const SettleUp = ({ balances, users, onSettleUp }: SettleUpProps) => {
     setSettleAmount('');
   };
 
+  // Format amount with current currency
+  const formatAmount = (amount: number): string => {
+    return `${currency.symbol}${(amount * currency.rate).toFixed(2)}`;
+  };
+
   return (
     <div>
       <h2 className="text-2xl font-bold mb-6">Settle Up</h2>
@@ -59,7 +66,7 @@ const SettleUp = ({ balances, users, onSettleUp }: SettleUpProps) => {
                   <div className="flex justify-between mb-1">
                     <span className="font-medium">{getUserName(balance.from)}</span>
                     <span className="font-medium text-red-600">
-                      {formatCurrency(balance.amount)}
+                      {formatAmount(balance.amount)}
                     </span>
                   </div>
                   <div className="text-sm text-gray-500">
@@ -76,12 +83,12 @@ const SettleUp = ({ balances, users, onSettleUp }: SettleUpProps) => {
             {selectedBalance ? (
               <div className="p-6 border rounded-lg">
                 <div className="mb-4">
-                  <strong>{getUserName(selectedBalance.from)}</strong> owes <strong>{getUserName(selectedBalance.to)}</strong> <strong>{formatCurrency(selectedBalance.amount)}</strong>
+                  <strong>{getUserName(selectedBalance.from)}</strong> owes <strong>{getUserName(selectedBalance.to)}</strong> <strong>{formatAmount(selectedBalance.amount)}</strong>
                 </div>
                 
                 <div className="mb-4">
                   <label className="block text-sm font-medium mb-1">
-                    Amount to Settle
+                    Amount to Settle ({currency.symbol})
                   </label>
                   <input
                     type="number"
