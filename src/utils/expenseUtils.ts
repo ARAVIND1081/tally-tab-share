@@ -1,4 +1,3 @@
-
 export interface Balance {
   from: string;
   to: string;
@@ -80,7 +79,7 @@ export const generateBalances = (expenses: any[], users: any[]) => {
   return consolidatedBalances;
 };
 
-// Update formatCurrency function to handle currency objects
+// Update formatCurrency function to properly handle currency objects
 export const formatCurrency = (amount: number, currency: { symbol: string; rate: number } | string = '$'): string => {
   if (typeof currency === 'string') {
     return `${currency}${amount.toFixed(2)}`;

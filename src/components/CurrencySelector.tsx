@@ -47,7 +47,9 @@ const CurrencySelector = ({ selectedCurrency, onCurrencyChange }: CurrencySelect
         }}
       >
         <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Select currency" />
+          <SelectValue placeholder="Select currency">
+            {selectedCurrency.symbol} {selectedCurrency.code}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {defaultCurrencies.map((currency) => (

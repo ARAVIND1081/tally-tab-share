@@ -4,17 +4,13 @@ import { Expense, User, Balance } from '@/types/types';
 import { getTotalExpenses, getUserBalance, formatCurrency, groupExpensesByCategory } from '@/utils/expenseUtils';
 import { BarChart } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { Currency } from '@/components/CurrencySelector';
 
 interface DashboardProps {
   expenses: Expense[];
   users: User[];
   balances: Balance[];
-  currency: {
-    code: string;
-    name: string;
-    symbol: string;
-    rate: number;
-  };
+  currency: Currency;
 }
 
 // Color palette for charts
@@ -60,6 +56,11 @@ const Dashboard = ({ expenses, users, balances, currency }: DashboardProps) => {
     const date = new Date(dateString);
     return date.toLocaleDateString();
   };
+
+  // Update the BarChart to use the correct currency
+  const updatedBarChart = () => (
+    <BarChart data={expenseByUserData} currencySymbol={currency.symbol} />
+  );
 
   return (
     <div>
@@ -145,7 +146,7 @@ const Dashboard = ({ expenses, users, balances, currency }: DashboardProps) => {
           <div>
             <h3 className="text-xl font-medium mb-4">Expenses by Person</h3>
             <div className="h-64">
-              <BarChart data={expenseByUserData} />
+              {updatedBarChart()}
             </div>
           </div>
         )}
