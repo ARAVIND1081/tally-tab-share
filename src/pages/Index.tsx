@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,6 +7,7 @@ import ExpenseList from '@/components/ExpenseList';
 import SettleUp from '@/components/SettleUp';
 import Dashboard from '@/components/Dashboard';
 import UserProfile from '@/components/UserProfile';
+import { CurrencySelector, defaultCurrencies } from '@/components/CurrencySelector';
 import { Expense, User } from '@/types/types';
 import { generateBalances } from '@/utils/expenseUtils';
 import { useToast } from '@/components/ui/use-toast';
@@ -26,12 +26,14 @@ const Index = () => {
   ]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [balances, setBalances] = useState<any[]>([]);
+  const [selectedCurrency, setSelectedCurrency] = useState(defaultCurrencies[0]);
   const { toast } = useToast();
 
   useEffect(() => {
     // Load from localStorage if available
     const savedExpenses = localStorage.getItem('expenses');
     const savedUsers = localStorage.getItem('users');
+    const savedCurrency = localStorage.getItem('currency');
     
     if (savedExpenses) {
       setExpenses(JSON.parse(savedExpenses));
@@ -39,6 +41,10 @@ const Index = () => {
     
     if (savedUsers) {
       setUsers(JSON.parse(savedUsers));
+    }
+    
+    if (savedCurrency) {
+      setSelectedCurrency(JSON.parse(savedCurrency));
     }
   }, []);
 
@@ -49,13 +55,14 @@ const Index = () => {
     // Save to localStorage
     localStorage.setItem('expenses', JSON.stringify(expenses));
     localStorage.setItem('users', JSON.stringify(users));
-  }, [expenses, users]);
+    localStorage.setItem('currency', JSON.stringify(selectedCurrency));
+  }, [expenses, users, selectedCurrency]);
 
   const handleAddExpense = (expense: Expense) => {
     setExpenses([...expenses, expense]);
     toast({
       title: "Expense added",
-      description: `${expense.description} ($${expense.amount.toFixed(2)}) has been added.`,
+      description: `${expense.description} (${selectedCurrency.symbol}${expense.amount.toFixed(2)}) has been added.`,
     });
   };
 
@@ -138,12 +145,18 @@ const Index = () => {
       <header className="bg-teal-600 text-white p-4 shadow-md">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold">ExpenseSplit</h1>
-          <UserProfile 
-            currentUser={currentUser}
-            users={users}
-            onAddUser={handleAddUser}
-            onDeleteUser={handleDeleteUser}
-          />
+          <div className="flex items-center gap-4">
+            <CurrencySelector 
+              selectedCurrency={selectedCurrency}
+              onCurrencyChange={setSelectedCurrency}
+            />
+            <UserProfile 
+              currentUser={currentUser}
+              users={users}
+              onAddUser={handleAddUser}
+              onDeleteUser={handleDeleteUser}
+            />
+          </div>
         </div>
       </header>
       
@@ -158,7 +171,12 @@ const Index = () => {
           
           <TabsContent value="dashboard" className="mt-0">
             <Card className="p-6">
-              <Dashboard expenses={expenses} users={users} balances={balances} />
+              <Dashboard 
+                expenses={expenses} 
+                users={users} 
+                balances={balances}
+                currency={selectedCurrency}
+              />
             </Card>
           </TabsContent>
           
@@ -167,7 +185,8 @@ const Index = () => {
               <ExpenseList 
                 expenses={expenses} 
                 users={users} 
-                onDeleteExpense={handleDeleteExpense} 
+                onDeleteExpense={handleDeleteExpense}
+                currency={selectedCurrency}
               />
             </Card>
           </TabsContent>
@@ -177,7 +196,8 @@ const Index = () => {
               <ExpenseForm 
                 users={users} 
                 currentUser={currentUser} 
-                onAddExpense={handleAddExpense} 
+                onAddExpense={handleAddExpense}
+                currency={selectedCurrency}
               />
             </Card>
           </TabsContent>
@@ -187,7 +207,8 @@ const Index = () => {
               <SettleUp 
                 balances={balances} 
                 users={users} 
-                onSettleUp={handleSettleUp} 
+                onSettleUp={handleSettleUp}
+                currency={selectedCurrency}
               />
             </Card>
           </TabsContent>

@@ -1,16 +1,26 @@
 
 import { Card } from "@/components/ui/card";
 import { Expense, User, Balance } from '@/types/types';
-import { getTotalExpenses, getUserBalance, formatCurrency } from '@/utils/expenseUtils';
+import { getTotalExpenses, getUserBalance, formatCurrency, groupExpensesByCategory } from '@/utils/expenseUtils';
 import { BarChart } from '@/components/ui/chart';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 interface DashboardProps {
   expenses: Expense[];
   users: User[];
   balances: Balance[];
+  currency: {
+    code: string;
+    name: string;
+    symbol: string;
+    rate: number;
+  };
 }
 
-const Dashboard = ({ expenses, users, balances }: DashboardProps) => {
+// Color palette for charts
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#a855f7', '#ec4899', '#14b8a6', '#8b5cf6'];
+
+const Dashboard = ({ expenses, users, balances, currency }: DashboardProps) => {
   const totalExpenses = getTotalExpenses(expenses);
   const regularExpenses = expenses.filter(e => e.type !== 'settlement');
   
@@ -20,22 +30,21 @@ const Dashboard = ({ expenses, users, balances }: DashboardProps) => {
     balance: getUserBalance(balances, user.id)
   }));
   
-  // Prepare chart data
-  const chartData = regularExpenses.length > 0 ? [
-    {
-      name: 'Expenses by User',
-      data: users.map(user => {
-        const userPaid = regularExpenses
-          .filter(e => e.paidBy === user.id)
-          .reduce((sum, e) => sum + e.amount, 0);
+  // Prepare expense by user chart data
+  const expenseByUserData = regularExpenses.length > 0 ? 
+    users.map(user => {
+      const userPaid = regularExpenses
+        .filter(e => e.paidBy === user.id)
+        .reduce((sum, e) => sum + e.amount, 0);
         
-        return {
-          name: user.name,
-          value: userPaid
-        };
-      })
-    }
-  ] : [];
+      return {
+        name: user.name,
+        value: userPaid
+      };
+    }).filter(item => item.value > 0) : [];
+    
+  // Prepare expense by category chart data
+  const expenseByCategoryData = groupExpensesByCategory(regularExpenses);
   
   // Recent expenses
   const recentExpenses = [...regularExpenses]
@@ -59,7 +68,7 @@ const Dashboard = ({ expenses, users, balances }: DashboardProps) => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <Card className="p-6 bg-teal-50 border-teal-200">
           <h3 className="text-lg font-medium mb-1">Total Expenses</h3>
-          <p className="text-3xl font-bold text-teal-600">{formatCurrency(totalExpenses)}</p>
+          <p className="text-3xl font-bold text-teal-600">{formatCurrency(totalExpenses, currency)}</p>
           <p className="text-sm text-gray-500 mt-2">{regularExpenses.length} expense(s)</p>
         </Card>
         
@@ -96,9 +105,9 @@ const Dashboard = ({ expenses, users, balances }: DashboardProps) => {
                   }
                 >
                   {balance > 0 
-                    ? `is owed ${formatCurrency(balance)}` 
+                    ? `is owed ${formatCurrency(balance, currency)}` 
                     : balance < 0 
-                      ? `owes ${formatCurrency(Math.abs(balance))}`
+                      ? `owes ${formatCurrency(Math.abs(balance), currency)}`
                       : `is settled up`
                   }
                 </span>
@@ -119,7 +128,7 @@ const Dashboard = ({ expenses, users, balances }: DashboardProps) => {
                       {formatDate(expense.date)} • Paid by {getUserName(expense.paidBy)}
                     </div>
                   </div>
-                  <div className="font-medium">{formatCurrency(expense.amount)}</div>
+                  <div className="font-medium">{formatCurrency(expense.amount, currency)}</div>
                 </div>
               ))}
             </div>
@@ -131,14 +140,47 @@ const Dashboard = ({ expenses, users, balances }: DashboardProps) => {
         </div>
       </div>
       
-      {chartData[0]?.data.some(item => item.value > 0) && (
-        <div className="mt-8">
-          <h3 className="text-xl font-medium mb-4">Expenses by Person</h3>
-          <div className="h-64">
-            <BarChart data={chartData[0].data} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+        {expenseByUserData.length > 0 && (
+          <div>
+            <h3 className="text-xl font-medium mb-4">Expenses by Person</h3>
+            <div className="h-64">
+              <BarChart data={expenseByUserData} />
+            </div>
           </div>
-        </div>
-      )}
+        )}
+        
+        {expenseByCategoryData.length > 0 && (
+          <div>
+            <h3 className="text-xl font-medium mb-4">Expenses by Category</h3>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={expenseByCategoryData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    nameKey="name"
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {expenseByCategoryData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: number) => [formatCurrency(value, currency), 'Amount']}
+                  />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

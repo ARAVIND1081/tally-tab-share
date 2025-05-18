@@ -8,9 +8,10 @@ interface ChartData {
 
 interface BarChartProps {
   data: ChartData[];
+  currencySymbol?: string;
 }
 
-export const BarChart = ({ data }: BarChartProps) => {
+export const BarChart = ({ data, currencySymbol = '$' }: BarChartProps) => {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <RechartBarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
@@ -24,7 +25,7 @@ export const BarChart = ({ data }: BarChartProps) => {
         />
         <YAxis />
         <Tooltip 
-          formatter={(value) => [`$${Number(value).toFixed(2)}`, 'Amount paid']} 
+          formatter={(value) => [`${currencySymbol}${Number(value).toFixed(2)}`, 'Amount paid']} 
           labelStyle={{ fontWeight: 'bold' }}
         />
         <Bar dataKey="value" fill="#14b8a6" barSize={40} />

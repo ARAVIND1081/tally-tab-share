@@ -1,4 +1,3 @@
-
 import { Expense, User, Balance } from '@/types/types';
 
 export const generateBalances = (expenses: Expense[], users: User[]): Balance[] => {
@@ -86,10 +85,28 @@ export const getUserBalance = (balances: Balance[], userId: string): number => {
   return totalOwed - totalOwes;
 };
 
-export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2
-  }).format(amount);
+export const formatCurrency = (amount: number, currency = { symbol: '$', rate: 1 }): string => {
+  // Convert amount to the selected currency
+  const convertedAmount = amount * (1 / currency.rate);
+  
+  return `${currency.symbol}${convertedAmount.toFixed(2)}`;
+};
+
+// Group expenses by category for charts
+export const groupExpensesByCategory = (expenses: Expense[]): { name: string, value: number }[] => {
+  const categories = new Map<string, number>();
+  
+  expenses.forEach(expense => {
+    if (expense.type === 'settlement') return;
+    
+    // Use the description as a simple category for now
+    const category = expense.description;
+    const currentTotal = categories.get(category) || 0;
+    categories.set(category, currentTotal + expense.amount);
+  });
+  
+  return Array.from(categories.entries()).map(([name, value]) => ({
+    name,
+    value
+  }));
 };
