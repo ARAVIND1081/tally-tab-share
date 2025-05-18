@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { User } from '@/components/ui/user';
+import { UserCircle } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
@@ -53,7 +53,7 @@ const UserProfile = ({ currentUser, users, onAddUser, onDeleteUser }: UserProfil
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="ghost" className="flex items-center gap-2">
-          <User className="text-white" />
+          <UserCircle className="text-white" />
           <span>{currentUser.name}</span>
         </Button>
       </PopoverTrigger>
