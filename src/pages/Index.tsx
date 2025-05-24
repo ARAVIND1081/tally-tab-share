@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -20,9 +19,7 @@ const Index = () => {
     email: 'me@example.com',
   });
   const [users, setUsers] = useState<User[]>([
-    { id: 'user1', name: 'Me', email: 'me@example.com' },
-    { id: 'user2', name: 'Alex', email: 'alex@example.com' },
-    { id: 'user3', name: 'Sam', email: 'sam@example.com' },
+    { id: 'user1', name: 'Me', email: 'me@example.com' }
   ]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [balances, setBalances] = useState<any[]>([]);
