@@ -15,12 +15,10 @@ import { useToast } from '@/components/ui/use-toast';
 const Index = () => {
   const [currentUser, setCurrentUser] = useState<User>({
     id: 'user1',
-    name: 'Me',
-    email: 'me@example.com',
+    name: '',
+    email: '',
   });
-  const [users, setUsers] = useState<User[]>([
-    { id: 'user1', name: 'Me', email: 'me@example.com' }
-  ]);
+  const [users, setUsers] = useState<User[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [balances, setBalances] = useState<any[]>([]);
   const [selectedCurrency, setSelectedCurrency] = useState(defaultCurrencies[0]);
@@ -80,7 +78,7 @@ const Index = () => {
   };
 
   const handleDeleteUser = (id: string) => {
-    if (users.length <= 2) {
+    if (users.length <= 1) {
       toast({
         title: "Cannot delete",
         description: "You need at least two people to split expenses.",
