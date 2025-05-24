@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { UserCircle } from 'lucide-react';
+import { UserCircle, Edit } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
@@ -31,6 +31,9 @@ const UserProfile = ({ currentUser, users, onAddUser, onDeleteUser }: UserProfil
   const [newUserName, setNewUserName] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
   const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
+  const [editProfileDialogOpen, setEditProfileDialogOpen] = useState(false);
+  const [editName, setEditName] = useState(currentUser.name);
+  const [editEmail, setEditEmail] = useState(currentUser.email);
 
   const handleAddUser = () => {
     if (!newUserName.trim() || !newUserEmail.trim()) {
@@ -49,17 +52,92 @@ const UserProfile = ({ currentUser, users, onAddUser, onDeleteUser }: UserProfil
     setAddUserDialogOpen(false);
   };
 
+  const handleUpdateProfile = () => {
+    if (!editName.trim() || !editEmail.trim()) {
+      alert('Please enter both name and email');
+      return;
+    }
+
+    // Update current user in the users array
+    const updatedUser = { ...currentUser, name: editName, email: editEmail };
+    
+    // Find and update the current user in the users array
+    const updatedUsers = users.map(user => 
+      user.id === currentUser.id ? updatedUser : user
+    );
+    
+    // If current user is not in users array, add them
+    if (!users.find(user => user.id === currentUser.id)) {
+      onAddUser(updatedUser);
+    } else {
+      // This is a bit of a hack since we don't have an update function
+      // We'll remove the old user and add the updated one
+      onDeleteUser(currentUser.id);
+      onAddUser(updatedUser);
+    }
+    
+    setEditProfileDialogOpen(false);
+  };
+
+  const displayName = currentUser.name.trim() || 'Enter your name';
+
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="ghost" className="flex items-center gap-2">
           <UserCircle className="text-white" />
-          <span>{currentUser.name}</span>
+          <span>{displayName}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80">
         <div className="space-y-4">
-          <h3 className="font-medium text-lg">Group Members</h3>
+          <div className="flex justify-between items-center">
+            <h3 className="font-medium text-lg">Group Members</h3>
+            <Dialog open={editProfileDialogOpen} onOpenChange={setEditProfileDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="sm" onClick={() => {
+                  setEditName(currentUser.name);
+                  setEditEmail(currentUser.email);
+                }}>
+                  <Edit size={16} />
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Edit Your Profile</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-name">Your Name</Label>
+                    <Input 
+                      id="edit-name"
+                      value={editName} 
+                      onChange={(e) => setEditName(e.target.value)} 
+                      placeholder="Enter your name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-email">Your Email</Label>
+                    <Input 
+                      id="edit-email"
+                      type="email"
+                      value={editEmail} 
+                      onChange={(e) => setEditEmail(e.target.value)}
+                      placeholder="Enter your email"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setEditProfileDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button className="bg-teal-600 hover:bg-teal-700" onClick={handleUpdateProfile}>
+                    Update
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
           
           <div className="space-y-2">
             {users.map(user => (

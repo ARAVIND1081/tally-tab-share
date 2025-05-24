@@ -70,7 +70,21 @@ const Index = () => {
   };
 
   const handleAddUser = (user: User) => {
-    setUsers([...users, user]);
+    // If it's updating the current user, update currentUser state too
+    if (user.id === currentUser.id) {
+      setCurrentUser(user);
+    }
+    
+    // Check if user already exists, if so update them
+    const existingUserIndex = users.findIndex(u => u.id === user.id);
+    if (existingUserIndex !== -1) {
+      const updatedUsers = [...users];
+      updatedUsers[existingUserIndex] = user;
+      setUsers(updatedUsers);
+    } else {
+      setUsers([...users, user]);
+    }
+    
     toast({
       title: "Person added",
       description: `${user.name} has been added to your group.`,
