@@ -10,7 +10,7 @@ import Dashboard from '@/components/Dashboard';
 import UserProfile from '@/components/UserProfile';
 import { CurrencySelector, defaultCurrencies } from '@/components/CurrencySelector';
 import { Expense, User } from '@/types/types';
-import { generateBalances } from '@/utils/expenseUtils';
+import { generateBalances, formatCurrency } from '@/utils/expenseUtils';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
