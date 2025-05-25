@@ -83,25 +83,35 @@ export const generateBalances = (expenses: any[], users: any[]) => {
   return consolidatedBalances;
 };
 
-// Update formatCurrency function to properly handle the selected currency as base currency
-export const formatCurrency = (amount: number, currency: { symbol: string; rate: number } | string = '$'): string => {
-  if (typeof currency === 'string') {
-    return `${currency}${amount.toFixed(2)}`;
-  }
-  
-  // The amount is already in the selected currency (base currency)
-  // No conversion needed since we're treating the selected currency as the base
-  return `${currency.symbol}${amount.toFixed(2)}`;
+// Convert amount from USD (base currency) to target currency
+export const convertCurrency = (amountInUSD: number, targetCurrency: { symbol: string; rate: number }): number => {
+  return amountInUSD * targetCurrency.rate;
 };
 
-// Calculate the total expenses
+// Convert amount from target currency back to USD (base currency)
+export const convertToUSD = (amount: number, fromCurrency: { symbol: string; rate: number }): number => {
+  return amount / fromCurrency.rate;
+};
+
+// Format currency with proper conversion
+export const formatCurrency = (amountInUSD: number, currency: { symbol: string; rate: number } | string = '$'): string => {
+  if (typeof currency === 'string') {
+    return `${currency}${amountInUSD.toFixed(2)}`;
+  }
+  
+  // Convert from USD to the target currency
+  const convertedAmount = convertCurrency(amountInUSD, currency);
+  return `${currency.symbol}${convertedAmount.toFixed(2)}`;
+};
+
+// Calculate the total expenses in USD
 export const getTotalExpenses = (expenses: any[]): number => {
   return expenses
     .filter(e => e.type !== 'settlement')
     .reduce((total, expense) => total + expense.amount, 0);
 };
 
-// Calculate user balance (positive means owed, negative means owes)
+// Calculate user balance (positive means owed, negative means owes) in USD
 export const getUserBalance = (balances: Balance[], userId: string): number => {
   let balance = 0;
   
@@ -114,7 +124,7 @@ export const getUserBalance = (balances: Balance[], userId: string): number => {
   return balance;
 };
 
-// Group expenses by category for pie chart
+// Group expenses by category for pie chart (amounts in USD)
 export const groupExpensesByCategory = (expenses: any[]): { name: string, value: number }[] => {
   const categories: { [key: string]: number } = {};
   

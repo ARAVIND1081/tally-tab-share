@@ -25,26 +25,32 @@ const SettleUp = ({ balances, users, onSettleUp, currency }: SettleUpProps) => {
   
   const handleSelectBalance = (balance: Balance) => {
     setSelectedBalance(balance);
-    setSettleAmount(balance.amount.toFixed(2));
+    // Convert from USD to current currency for display
+    const convertedAmount = balance.amount * currency.rate;
+    setSettleAmount(convertedAmount.toFixed(2));
   };
   
   const handleSettleUp = () => {
     if (!selectedBalance) return;
     
     const amount = parseFloat(settleAmount);
-    if (isNaN(amount) || amount <= 0 || amount > selectedBalance.amount) {
+    const maxAmountInCurrentCurrency = selectedBalance.amount * currency.rate;
+    
+    if (isNaN(amount) || amount <= 0 || amount > maxAmountInCurrentCurrency) {
       alert('Please enter a valid amount');
       return;
     }
     
-    onSettleUp(selectedBalance.from, selectedBalance.to, amount);
+    // Convert back to USD for storage
+    const amountInUSD = amount / currency.rate;
+    onSettleUp(selectedBalance.from, selectedBalance.to, amountInUSD);
     setSelectedBalance(null);
     setSettleAmount('');
   };
 
-  // Format amount with current currency (no conversion needed as amounts are in base currency)
-  const formatAmount = (amount: number): string => {
-    return formatCurrency(amount, currency);
+  // Format amount with current currency (convert from USD)
+  const formatAmount = (amountInUSD: number): string => {
+    return formatCurrency(amountInUSD, currency);
   };
 
   return (
@@ -95,7 +101,7 @@ const SettleUp = ({ balances, users, onSettleUp, currency }: SettleUpProps) => {
                     type="number"
                     className="w-full p-2 border rounded"
                     min="0.01"
-                    max={selectedBalance.amount}
+                    max={selectedBalance.amount * currency.rate}
                     step="0.01"
                     value={settleAmount}
                     onChange={(e) => setSettleAmount(e.target.value)}
@@ -130,4 +136,3 @@ const SettleUp = ({ balances, users, onSettleUp, currency }: SettleUpProps) => {
 };
 
 export default SettleUp;
-

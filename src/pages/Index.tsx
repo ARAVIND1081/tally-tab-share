@@ -71,7 +71,7 @@ const Index = () => {
     setExpenses([...expenses, expense]);
     toast({
       title: "Expense added",
-      description: `${expense.description} (${selectedCurrency.symbol}${expense.amount.toFixed(2)}) has been added.`,
+      description: `${expense.description} (${formatCurrency(expense.amount, selectedCurrency)}) has been added.`,
     });
   };
 
@@ -159,7 +159,7 @@ const Index = () => {
     setExpenses([...expenses, newExpense]);
     toast({
       title: "Settlement recorded",
-      description: `Settlement of $${amount.toFixed(2)} has been recorded.`,
+      description: `Settlement of ${formatCurrency(amount, selectedCurrency)} has been recorded.`,
     });
   };
 

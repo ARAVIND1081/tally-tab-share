@@ -145,10 +145,13 @@ const ExpenseForm = ({ users, currentUser, onAddExpense, currency }: ExpenseForm
       return;
     }
     
+    // Convert the entered amount to USD (base currency) for storage
+    const amountInUSD = numAmount / currency.rate;
+    
     let participants: Participant[] = [];
     
     if (splitType === 'equal') {
-      const share = numAmount / activeParticipants.length;
+      const share = amountInUSD / activeParticipants.length;
       participants = activeParticipants.map(user => ({
         userId: user.id,
         share
@@ -181,16 +184,17 @@ const ExpenseForm = ({ users, currentUser, onAddExpense, currency }: ExpenseForm
         return;
       }
       
+      // Convert custom shares to USD for storage
       participants = activeParticipants.map(user => ({
         userId: user.id,
-        share: parseFloat(customShares[user.id])
+        share: parseFloat(customShares[user.id]) / currency.rate
       }));
     }
     
     const newExpense: Expense = {
       id: uuidv4(),
       description,
-      amount: numAmount,
+      amount: amountInUSD, // Store in USD
       date: new Date().toISOString(),
       paidBy,
       participants,
