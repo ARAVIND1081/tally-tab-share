@@ -14,17 +14,7 @@ import {
 import { User, Expense, Participant } from '@/types/types';
 import { v4 as uuidv4 } from 'uuid';
 import { Currency } from '@/components/CurrencySelector';
-import { 
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogClose
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from '@/components/ui/use-toast';
 import { X, UserPlus } from 'lucide-react';
 
 interface ExpenseFormProps {
@@ -73,29 +63,21 @@ const ExpenseForm = ({ users, currentUser, onAddExpense, currency }: ExpenseForm
       return;
     }
 
-    // Create a new participant with unique ID
     const newParticipant: User = {
       id: `custom-${uuidv4()}`,
       name: newParticipantName.trim(),
       email: `${newParticipantName.trim().toLowerCase().replace(/\s+/g, '.')}@example.com`
     };
 
-    // Add to custom participants
     setCustomParticipants([...customParticipants, newParticipant]);
-
-    // Add to selected participants
     setSelectedParticipants({
       ...selectedParticipants,
       [newParticipant.id]: true
     });
-
-    // Initialize custom share if needed
     setCustomShares({
       ...customShares,
       [newParticipant.id]: ''
     });
-
-    // Clear input
     setNewParticipantName('');
 
     toast({
@@ -105,17 +87,14 @@ const ExpenseForm = ({ users, currentUser, onAddExpense, currency }: ExpenseForm
   };
 
   const handleRemoveParticipant = (userId: string) => {
-    // If it's a custom participant, remove from the list
     if (userId.startsWith('custom-')) {
       setCustomParticipants(customParticipants.filter(p => p.id !== userId));
     }
     
-    // Remove from selected participants
     const updatedParticipants = { ...selectedParticipants };
     delete updatedParticipants[userId];
     setSelectedParticipants(updatedParticipants);
     
-    // Remove from custom shares if present
     const updatedShares = { ...customShares };
     delete updatedShares[userId];
     setCustomShares(updatedShares);
@@ -129,6 +108,8 @@ const ExpenseForm = ({ users, currentUser, onAddExpense, currency }: ExpenseForm
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('Form submission started');
+    
     const numAmount = parseFloat(amount);
     if (!description || isNaN(numAmount) || numAmount <= 0) {
       toast({
@@ -139,14 +120,26 @@ const ExpenseForm = ({ users, currentUser, onAddExpense, currency }: ExpenseForm
       return;
     }
     
-    // Combine system users and custom participants
     const allUsers = [...users, ...customParticipants];
     const activeParticipants = allUsers.filter(user => selectedParticipants[user.id]);
+    
+    console.log('Active participants:', activeParticipants);
     
     if (activeParticipants.length === 0) {
       toast({
         title: "No participants",
         description: "Please select at least one participant",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Ensure paidBy is valid
+    const paidByUser = allUsers.find(user => user.id === paidBy);
+    if (!paidByUser) {
+      toast({
+        title: "Invalid payer",
+        description: "Please select who paid for this expense",
         variant: "destructive"
       });
       return;
@@ -161,7 +154,6 @@ const ExpenseForm = ({ users, currentUser, onAddExpense, currency }: ExpenseForm
         share
       }));
     } else if (splitType === 'custom') {
-      // Validate that all custom shares are entered
       const missingShares = activeParticipants.some(
         user => !customShares[user.id] || isNaN(parseFloat(customShares[user.id]))
       );
@@ -175,7 +167,6 @@ const ExpenseForm = ({ users, currentUser, onAddExpense, currency }: ExpenseForm
         return;
       }
       
-      // Calculate total of custom shares
       const totalShares = activeParticipants.reduce(
         (sum, user) => sum + parseFloat(customShares[user.id] || '0'),
         0
@@ -207,18 +198,31 @@ const ExpenseForm = ({ users, currentUser, onAddExpense, currency }: ExpenseForm
       category: 'Uncategorized'
     };
     
-    onAddExpense(newExpense);
+    console.log('New expense:', newExpense);
     
-    // Reset form
-    setDescription('');
-    setAmount('');
-    setSplitType('equal');
-    setSelectedParticipants(users.reduce((acc, user) => ({ ...acc, [user.id]: true }), {}));
-    setCustomShares(users.reduce((acc, user) => ({ ...acc, [user.id]: '' }), {}));
-    setCustomParticipants([]);
+    try {
+      onAddExpense(newExpense);
+      
+      // Reset form
+      setDescription('');
+      setAmount('');
+      setPaidBy(currentUser.id);
+      setSplitType('equal');
+      setSelectedParticipants(users.reduce((acc, user) => ({ ...acc, [user.id]: true }), {}));
+      setCustomShares(users.reduce((acc, user) => ({ ...acc, [user.id]: '' }), {}));
+      setCustomParticipants([]);
+      
+      console.log('Expense added successfully');
+    } catch (error) {
+      console.error('Error adding expense:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add expense. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  // All participants (system users + custom participants)
   const allParticipants = [...users, ...customParticipants];
 
   return (
@@ -296,13 +300,11 @@ const ExpenseForm = ({ users, currentUser, onAddExpense, currency }: ExpenseForm
           </div>
         </div>
         
-        {/* Participants section with improved UI */}
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <Label className="text-lg font-medium">Participants</Label>
           </div>
           
-          {/* Quick add participant input */}
           <div className="flex gap-2">
             <Input
               placeholder="Enter participant name..."
@@ -320,7 +322,6 @@ const ExpenseForm = ({ users, currentUser, onAddExpense, currency }: ExpenseForm
             </Button>
           </div>
           
-          {/* Participants list */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
             {allParticipants.map(user => (
               <div 
@@ -348,7 +349,6 @@ const ExpenseForm = ({ users, currentUser, onAddExpense, currency }: ExpenseForm
                   </label>
                 </div>
                 
-                {/* Custom split amount input */}
                 {splitType === 'custom' && selectedParticipants[user.id] && (
                   <Input
                     type="number"
@@ -361,7 +361,6 @@ const ExpenseForm = ({ users, currentUser, onAddExpense, currency }: ExpenseForm
                   />
                 )}
                 
-                {/* Remove participant button */}
                 <Button
                   type="button"
                   variant="ghost"
@@ -375,7 +374,6 @@ const ExpenseForm = ({ users, currentUser, onAddExpense, currency }: ExpenseForm
             ))}
           </div>
           
-          {/* Show message if no participants */}
           {allParticipants.length === 0 && (
             <div className="text-center py-4 bg-gray-50 rounded-lg">
               <p className="text-gray-500">No participants added yet. Add some participants to continue.</p>
