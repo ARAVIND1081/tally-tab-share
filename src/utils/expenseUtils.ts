@@ -1,3 +1,4 @@
+
 export interface Balance {
   from: string;
   to: string;
@@ -9,11 +10,9 @@ export const generateBalances = (expenses: any[], users: any[]) => {
 
   // Initialize balances for each pair of users
   users.forEach(user1 => {
+    userBalances[user1.id] = {};
     users.forEach(user2 => {
       if (user1.id !== user2.id) {
-        if (!userBalances[user1.id]) {
-          userBalances[user1.id] = {};
-        }
         userBalances[user1.id][user2.id] = 0;
       }
     });
@@ -21,15 +20,19 @@ export const generateBalances = (expenses: any[], users: any[]) => {
 
   // Process each expense
   expenses.forEach(expense => {
-    const numberOfParticipants = expense.participants.length;
-    
     // Distribute the expense among participants
     expense.participants.forEach(participant => {
-      const owes = expense.paidBy;
-      const owedTo = participant.userId;
+      const paidBy = expense.paidBy;
+      const owedBy = participant.userId;
       const share = participant.share;
 
-      userBalances[owes][owedTo] += share;
+      // Only process if both users exist in our users array
+      if (userBalances[paidBy] && userBalances[owedBy] !== undefined) {
+        // The person who paid is owed money by each participant
+        if (paidBy !== owedBy) {
+          userBalances[owedBy][paidBy] += share;
+        }
+      }
     });
   });
 
@@ -37,7 +40,7 @@ export const generateBalances = (expenses: any[], users: any[]) => {
   const balances: Balance[] = [];
   users.forEach(user1 => {
     users.forEach(user2 => {
-      if (user1.id !== user2.id) {
+      if (user1.id !== user2.id && userBalances[user1.id] && userBalances[user1.id][user2.id] !== undefined) {
         const amount = userBalances[user1.id][user2.id];
         if (amount > 0) {
           balances.push({ from: user1.id, to: user2.id, amount: amount });
