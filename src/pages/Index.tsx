@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LogOut } from 'lucide-react';
 import ExpenseForm from '@/components/ExpenseForm';
 import ExpenseList from '@/components/ExpenseList';
 import SettleUp from '@/components/SettleUp';
@@ -11,18 +12,31 @@ import { CurrencySelector, defaultCurrencies } from '@/components/CurrencySelect
 import { Expense, User } from '@/types/types';
 import { generateBalances } from '@/utils/expenseUtils';
 import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Index = () => {
+  const { user, logout } = useAuth();
   const [currentUser, setCurrentUser] = useState<User>({
-    id: 'user1',
-    name: '',
-    email: '',
+    id: user?.id || 'user1',
+    name: user?.name || '',
+    email: user?.email || '',
   });
   const [users, setUsers] = useState<User[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [balances, setBalances] = useState<any[]>([]);
   const [selectedCurrency, setSelectedCurrency] = useState(defaultCurrencies[0]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Update current user from auth context
+    if (user) {
+      setCurrentUser({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      });
+    }
+  }, [user]);
 
   useEffect(() => {
     // Load from localStorage if available
@@ -149,6 +163,14 @@ const Index = () => {
     });
   };
 
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Logged out",
+      description: "You have been logged out successfully.",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-teal-600 text-white p-4 shadow-md">
@@ -165,6 +187,9 @@ const Index = () => {
               onAddUser={handleAddUser}
               onDeleteUser={handleDeleteUser}
             />
+            <Button variant="ghost" onClick={handleLogout} className="text-white hover:bg-teal-700">
+              <LogOut size={20} />
+            </Button>
           </div>
         </div>
       </header>
