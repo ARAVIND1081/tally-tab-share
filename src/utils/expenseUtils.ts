@@ -1,4 +1,5 @@
 
+
 export interface Balance {
   from: string;
   to: string;
@@ -82,15 +83,15 @@ export const generateBalances = (expenses: any[], users: any[]) => {
   return consolidatedBalances;
 };
 
-// Update formatCurrency function to properly handle currency objects
+// Update formatCurrency function to properly handle the selected currency as base currency
 export const formatCurrency = (amount: number, currency: { symbol: string; rate: number } | string = '$'): string => {
   if (typeof currency === 'string') {
     return `${currency}${amount.toFixed(2)}`;
   }
   
-  // Convert amount using the currency rate and apply the symbol
-  const convertedAmount = amount * currency.rate;
-  return `${currency.symbol}${convertedAmount.toFixed(2)}`;
+  // The amount is already in the selected currency (base currency)
+  // No conversion needed since we're treating the selected currency as the base
+  return `${currency.symbol}${amount.toFixed(2)}`;
 };
 
 // Calculate the total expenses
@@ -130,3 +131,4 @@ export const groupExpensesByCategory = (expenses: any[]): { name: string, value:
     value: categories[category]
   }));
 };
+

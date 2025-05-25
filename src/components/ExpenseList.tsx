@@ -1,4 +1,5 @@
 
+
 import { useState } from 'react';
 import {
   Table,
@@ -68,9 +69,9 @@ const ExpenseList = ({ expenses, users, onDeleteExpense, currency }: ExpenseList
     return expense.type === 'settlement';
   };
 
-  // Use the currency symbol for formatting
+  // Use the currency symbol for formatting (no conversion needed as amounts are in base currency)
   const formatAmount = (amount: number): string => {
-    return `${currency.symbol}${(amount * currency.rate).toFixed(2)}`;
+    return formatCurrency(amount, currency);
   };
 
   return (
@@ -163,3 +164,4 @@ const ExpenseList = ({ expenses, users, onDeleteExpense, currency }: ExpenseList
 };
 
 export default ExpenseList;
+

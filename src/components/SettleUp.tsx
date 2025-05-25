@@ -1,4 +1,5 @@
 
+
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Balance, User } from '@/types/types';
@@ -41,9 +42,9 @@ const SettleUp = ({ balances, users, onSettleUp, currency }: SettleUpProps) => {
     setSettleAmount('');
   };
 
-  // Format amount with current currency
+  // Format amount with current currency (no conversion needed as amounts are in base currency)
   const formatAmount = (amount: number): string => {
-    return `${currency.symbol}${(amount * currency.rate).toFixed(2)}`;
+    return formatCurrency(amount, currency);
   };
 
   return (
@@ -129,3 +130,4 @@ const SettleUp = ({ balances, users, onSettleUp, currency }: SettleUpProps) => {
 };
 
 export default SettleUp;
+
