@@ -1,7 +1,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Expense, User, Balance } from '@/types/types';
-import { getTotalExpenses, getUserBalance, formatCurrency, groupExpensesByCategory } from '@/utils/expenseUtils';
+import { getTotalExpenses, getUserBalance, formatCurrency, groupExpensesByCategory, convertCurrency } from '@/utils/expenseUtils';
 import { BarChart } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Currency } from '@/components/CurrencySelector';
@@ -26,21 +26,28 @@ const Dashboard = ({ expenses, users, balances, currency }: DashboardProps) => {
     balance: getUserBalance(balances, user.id)
   }));
   
-  // Prepare expense by user chart data
+  // Prepare expense by user chart data - convert amounts to selected currency
   const expenseByUserData = regularExpenses.length > 0 ? 
     users.map(user => {
-      const userPaid = regularExpenses
+      const userPaidUSD = regularExpenses
         .filter(e => e.paidBy === user.id)
         .reduce((sum, e) => sum + e.amount, 0);
+      
+      // Convert from USD to selected currency for display
+      const userPaidInCurrency = convertCurrency(userPaidUSD, currency);
         
       return {
         name: user.name,
-        value: userPaid
+        value: userPaidInCurrency
       };
     }).filter(item => item.value > 0) : [];
     
-  // Prepare expense by category chart data
-  const expenseByCategoryData = groupExpensesByCategory(regularExpenses);
+  // Prepare expense by category chart data - convert amounts to selected currency
+  const expenseByCategoryDataUSD = groupExpensesByCategory(regularExpenses);
+  const expenseByCategoryData = expenseByCategoryDataUSD.map(category => ({
+    name: category.name,
+    value: convertCurrency(category.value, currency)
+  }));
   
   // Recent expenses
   const recentExpenses = [...regularExpenses]
@@ -57,10 +64,11 @@ const Dashboard = ({ expenses, users, balances, currency }: DashboardProps) => {
     return date.toLocaleDateString();
   };
 
-  // Update the BarChart to use the correct currency
-  const updatedBarChart = () => (
-    <BarChart data={expenseByUserData} currencySymbol={currency.symbol} />
-  );
+  // Custom tooltip formatter for the pie chart
+  const pieChartTooltipFormatter = (value: number) => [
+    `${currency.symbol}${value.toFixed(2)}`,
+    'Amount'
+  ];
 
   return (
     <div>
@@ -146,7 +154,7 @@ const Dashboard = ({ expenses, users, balances, currency }: DashboardProps) => {
           <div>
             <h3 className="text-xl font-medium mb-4">Expenses by Person</h3>
             <div className="h-64">
-              {updatedBarChart()}
+              <BarChart data={expenseByUserData} currencySymbol={currency.symbol} />
             </div>
           </div>
         )}
@@ -172,9 +180,7 @@ const Dashboard = ({ expenses, users, balances, currency }: DashboardProps) => {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip 
-                    formatter={(value: number) => [formatCurrency(value, currency), 'Amount']}
-                  />
+                  <Tooltip formatter={pieChartTooltipFormatter} />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>

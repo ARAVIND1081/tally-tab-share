@@ -1,5 +1,3 @@
-
-
 export interface Balance {
   from: string;
   to: string;
@@ -141,4 +139,3 @@ export const groupExpensesByCategory = (expenses: any[]): { name: string, value:
     value: categories[category]
   }));
 };
-
