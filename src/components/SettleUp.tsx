@@ -1,9 +1,8 @@
 
-
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Balance, User } from '@/types/types';
-import { formatCurrency } from '@/utils/expenseUtils';
+import { formatCurrency, convertToUSD } from '@/utils/expenseUtils';
 import { AlertCircle } from 'lucide-react';
 import { Currency } from '@/components/CurrencySelector';
 
@@ -25,7 +24,7 @@ const SettleUp = ({ balances, users, onSettleUp, currency }: SettleUpProps) => {
   
   const handleSelectBalance = (balance: Balance) => {
     setSelectedBalance(balance);
-    // Convert from USD to current currency for display
+    // Display the amount in the selected currency
     const convertedAmount = balance.amount * currency.rate;
     setSettleAmount(convertedAmount.toFixed(2));
   };
@@ -41,8 +40,8 @@ const SettleUp = ({ balances, users, onSettleUp, currency }: SettleUpProps) => {
       return;
     }
     
-    // Convert back to USD for storage
-    const amountInUSD = amount / currency.rate;
+    // Convert the entered amount from selected currency to USD for storage
+    const amountInUSD = convertToUSD(amount, currency);
     onSettleUp(selectedBalance.from, selectedBalance.to, amountInUSD);
     setSelectedBalance(null);
     setSettleAmount('');

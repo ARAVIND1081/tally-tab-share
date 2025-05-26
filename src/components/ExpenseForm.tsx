@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Currency } from '@/components/CurrencySelector';
 import { useToast } from '@/components/ui/use-toast';
 import { X, UserPlus } from 'lucide-react';
+import { convertToUSD } from '@/utils/expenseUtils';
 
 interface ExpenseFormProps {
   users: User[];
@@ -145,8 +145,8 @@ const ExpenseForm = ({ users, currentUser, onAddExpense, currency }: ExpenseForm
       return;
     }
     
-    // Convert the entered amount to USD (base currency) for storage
-    const amountInUSD = numAmount / currency.rate;
+    // Convert the entered amount from the selected currency to USD for storage
+    const amountInUSD = convertToUSD(numAmount, currency);
     
     let participants: Participant[] = [];
     
@@ -184,10 +184,10 @@ const ExpenseForm = ({ users, currentUser, onAddExpense, currency }: ExpenseForm
         return;
       }
       
-      // Convert custom shares to USD for storage
+      // Convert custom shares from selected currency to USD for storage
       participants = activeParticipants.map(user => ({
         userId: user.id,
-        share: parseFloat(customShares[user.id]) / currency.rate
+        share: convertToUSD(parseFloat(customShares[user.id]), currency)
       }));
     }
     
