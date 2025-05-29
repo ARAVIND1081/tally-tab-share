@@ -2,14 +2,15 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 
-// Replace these with your actual Firebase config values from Firebase Console
+// Your Firebase configuration from Firebase Console
 const firebaseConfig = {
-  apiKey: "your-actual-api-key-here",
-  authDomain: "your-project-id.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project-id.appspot.com",
-  messagingSenderId: "your-messaging-sender-id",
-  appId: "your-app-id"
+  apiKey: "AIzaSyCpky9FUeXuIRP-wbBNm4SQC7xVCD0Av58",
+  authDomain: "authenticator-675ca.firebaseapp.com",
+  projectId: "authenticator-675ca",
+  storageBucket: "authenticator-675ca.firebasestorage.app",
+  messagingSenderId: "109546216436",
+  appId: "1:109546216436:web:47c8b149a39173c691f7a1",
+  measurementId: "G-ES315KCRK8"
 };
 
 // Initialize Firebase
