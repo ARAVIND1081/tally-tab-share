@@ -1,12 +1,18 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AuthUser, LoginCredentials, SignupCredentials } from '@/types/auth';
+import { 
+  signInWithPopup, 
+  signOut, 
+  onAuthStateChanged,
+  User as FirebaseUser
+} from 'firebase/auth';
+import { auth, googleProvider } from '@/config/firebase';
+import { AuthUser } from '@/types/auth';
 
 interface AuthContextType {
   user: AuthUser | null;
-  login: (credentials: LoginCredentials) => Promise<boolean>;
-  signup: (credentials: SignupCredentials) => Promise<boolean>;
-  logout: () => void;
+  loginWithGoogle: () => Promise<boolean>;
+  logout: () => Promise<void>;
   isLoading: boolean;
 }
 
@@ -25,91 +31,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in on app start
-    const savedUser = localStorage.getItem('auth_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setIsLoading(false);
-  }, []);
-
-  const login = async (credentials: LoginCredentials): Promise<boolean> => {
-    try {
-      // Get stored users
-      const storedUsers = localStorage.getItem('registered_users');
-      const users = storedUsers ? JSON.parse(storedUsers) : [];
-      
-      // Find user with matching email and password
-      const user = users.find((u: any) => 
-        u.email === credentials.email && u.password === credentials.password
-      );
-      
-      if (user) {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
         const authUser: AuthUser = {
-          id: user.id,
-          email: user.email,
-          name: user.name
+          id: firebaseUser.uid,
+          email: firebaseUser.email || '',
+          name: firebaseUser.displayName || '',
         };
         setUser(authUser);
-        localStorage.setItem('auth_user', JSON.stringify(authUser));
-        return true;
+      } else {
+        setUser(null);
       }
-      
-      return false;
-    } catch (error) {
-      console.error('Login error:', error);
-      return false;
-    }
-  };
+      setIsLoading(false);
+    });
 
-  const signup = async (credentials: SignupCredentials): Promise<boolean> => {
+    return () => unsubscribe();
+  }, []);
+
+  const loginWithGoogle = async (): Promise<boolean> => {
     try {
-      // Get existing users
-      const storedUsers = localStorage.getItem('registered_users');
-      const users = storedUsers ? JSON.parse(storedUsers) : [];
+      setIsLoading(true);
+      const result = await signInWithPopup(auth, googleProvider);
+      const firebaseUser = result.user;
       
-      // Check if email already exists
-      if (users.some((u: any) => u.email === credentials.email)) {
-        return false;
-      }
-      
-      // Create new user
-      const newUser = {
-        id: `user_${Date.now()}`,
-        email: credentials.email,
-        password: credentials.password,
-        name: credentials.name
-      };
-      
-      // Save to registered users
-      users.push(newUser);
-      localStorage.setItem('registered_users', JSON.stringify(users));
-      
-      // Auto login after signup
       const authUser: AuthUser = {
-        id: newUser.id,
-        email: newUser.email,
-        name: newUser.name
+        id: firebaseUser.uid,
+        email: firebaseUser.email || '',
+        name: firebaseUser.displayName || '',
       };
-      setUser(authUser);
-      localStorage.setItem('auth_user', JSON.stringify(authUser));
       
+      setUser(authUser);
       return true;
     } catch (error) {
-      console.error('Signup error:', error);
+      console.error('Google login error:', error);
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('auth_user');
+  const logout = async (): Promise<void> => {
+    try {
+      await signOut(auth);
+      setUser(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   const value = {
     user,
-    login,
-    signup,
+    loginWithGoogle,
     logout,
     isLoading
   };

@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import AuthPage from "./components/auth/AuthPage";
+import GoogleAuthPage from "./components/auth/GoogleAuthPage";
 
 const queryClient = new QueryClient();
 
@@ -26,7 +26,7 @@ const AuthenticatedApp = () => {
   }
 
   if (!user) {
-    return <AuthPage />;
+    return <GoogleAuthPage />;
   }
 
   return (
