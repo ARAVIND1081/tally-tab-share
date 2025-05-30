@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { 
   signInWithPopup, 
@@ -56,8 +55,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginWithGoogle = async (): Promise<boolean> => {
     try {
       setIsLoading(true);
+      console.log('Starting Google login...');
+      console.log('Auth instance:', auth);
+      console.log('Google provider:', googleProvider);
+      
       const result = await signInWithPopup(auth, googleProvider);
       const firebaseUser = result.user;
+      
+      console.log('Google login successful:', firebaseUser);
       
       const authUser: AuthUser = {
         id: firebaseUser.uid,
@@ -67,8 +72,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       setUser(authUser);
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Google login error:', error);
+      console.error('Error code:', error?.code);
+      console.error('Error message:', error?.message);
+      console.error('Error details:', error);
       return false;
     } finally {
       setIsLoading(false);
