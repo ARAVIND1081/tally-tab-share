@@ -17,6 +17,7 @@ interface AuthContextType {
   signup: (userData: { email: string; password: string; name: string }) => Promise<boolean>;
   logout: () => Promise<void>;
   isLoading: boolean;
+  error: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,20 +33,26 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('Setting up auth state listener');
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+      console.log('Auth state changed:', firebaseUser ? 'User logged in' : 'User logged out');
       if (firebaseUser) {
         const authUser: AuthUser = {
           id: firebaseUser.uid,
           email: firebaseUser.email || '',
-          name: firebaseUser.displayName || '',
+          name: firebaseUser.displayName || 'User',
         };
         setUser(authUser);
+        console.log('User set:', authUser);
       } else {
         setUser(null);
+        console.log('User cleared');
       }
       setIsLoading(false);
+      setError(null);
     });
 
     return () => unsubscribe();
@@ -53,20 +60,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (credentials: { email: string; password: string }): Promise<boolean> => {
     try {
+      console.log('Attempting login for:', credentials.email);
       setIsLoading(true);
+      setError(null);
       const result = await signInWithEmailAndPassword(auth, credentials.email, credentials.password);
       const firebaseUser = result.user;
       
       const authUser: AuthUser = {
         id: firebaseUser.uid,
         email: firebaseUser.email || '',
-        name: firebaseUser.displayName || '',
+        name: firebaseUser.displayName || 'User',
       };
       
       setUser(authUser);
+      console.log('Login successful');
       return true;
-    } catch (error) {
-      console.error('Email login error:', error);
+    } catch (error: any) {
+      console.error('Login error:', error);
+      setError('Invalid email or password. Please try again.');
       return false;
     } finally {
       setIsLoading(false);
@@ -75,7 +86,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signup = async (userData: { email: string; password: string; name: string }): Promise<boolean> => {
     try {
+      console.log('Attempting signup for:', userData.email);
       setIsLoading(true);
+      setError(null);
       const result = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
       const firebaseUser = result.user;
       
@@ -91,9 +104,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
       
       setUser(authUser);
+      console.log('Signup successful');
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Signup error:', error);
+      setError('Failed to create account. Please try again.');
       return false;
     } finally {
       setIsLoading(false);
@@ -102,10 +117,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async (): Promise<void> => {
     try {
+      console.log('Logging out');
       await signOut(auth);
       setUser(null);
+      setError(null);
     } catch (error) {
       console.error('Logout error:', error);
+      setError('Failed to logout. Please try again.');
     }
   };
 
@@ -114,7 +132,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     signup,
     logout,
-    isLoading
+    isLoading,
+    error
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

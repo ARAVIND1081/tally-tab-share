@@ -12,7 +12,9 @@ import AuthPage from "./components/auth/AuthPage";
 const queryClient = new QueryClient();
 
 const AuthenticatedApp = () => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, error } = useAuth();
+
+  console.log('AuthenticatedApp render:', { user: !!user, isLoading, error });
 
   if (isLoading) {
     return (
@@ -23,6 +25,10 @@ const AuthenticatedApp = () => {
         </div>
       </div>
     );
+  }
+
+  if (error) {
+    console.error('Authentication error:', error);
   }
 
   if (!user) {
@@ -39,16 +45,22 @@ const AuthenticatedApp = () => {
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <AuthenticatedApp />
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  console.log('App component rendering');
+  
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AuthProvider>
+          <div className="w-full min-h-screen">
+            <Toaster />
+            <Sonner />
+            <AuthenticatedApp />
+          </div>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
