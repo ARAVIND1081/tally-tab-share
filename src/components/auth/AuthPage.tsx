@@ -36,11 +36,11 @@ const AuthPage = () => {
             </TabsList>
             
             <TabsContent value="login" className="mt-0">
-              <LoginForm />
+              <LoginForm onSwitchToSignup={() => setActiveTab('signup')} />
             </TabsContent>
             
             <TabsContent value="signup" className="mt-0">
-              <SignupForm />
+              <SignupForm onSwitchToLogin={() => setActiveTab('login')} />
             </TabsContent>
           </Tabs>
         </Card>

@@ -36,7 +36,7 @@ interface CurrencySelectorProps {
 const CurrencySelector = ({ selectedCurrency, onCurrencyChange }: CurrencySelectorProps) => {
   return (
     <div className="flex items-center gap-2">
-      <DollarSign className="text-gray-500" size={16} />
+      <DollarSign className="text-white" size={16} />
       <Select
         value={selectedCurrency.code}
         onValueChange={(value) => {
@@ -46,14 +46,18 @@ const CurrencySelector = ({ selectedCurrency, onCurrencyChange }: CurrencySelect
           }
         }}
       >
-        <SelectTrigger className="w-[180px]">
+        <SelectTrigger className="w-[180px] bg-white text-gray-900 border-gray-300 hover:bg-gray-50">
           <SelectValue placeholder="Select currency">
             {selectedCurrency.symbol} {selectedCurrency.code}
           </SelectValue>
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="bg-white border border-gray-300 shadow-lg z-50">
           {defaultCurrencies.map((currency) => (
-            <SelectItem key={currency.code} value={currency.code}>
+            <SelectItem 
+              key={currency.code} 
+              value={currency.code}
+              className="text-gray-900 hover:bg-gray-100 cursor-pointer"
+            >
               {currency.symbol} {currency.name} ({currency.code})
             </SelectItem>
           ))}
